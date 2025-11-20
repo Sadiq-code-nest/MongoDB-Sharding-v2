@@ -1,46 +1,58 @@
 version: "3.8"
 
 services:
-  configsvr:
+  configdb:
     image: mongo:7.0
-    container_name: configsvr
-    command: --configsvr --replSet configReplSet --port 27017
+    container_name: configdb-server
+    command: --configsvr --replSet cfgReplSet --port 27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
     ports:
       - 27017:27017
     volumes:
-      - configsvr:/data/db
+      - configdb-data:/data/db
 
-  shard1:
+  shard_alpha:
     image: mongo:7.0
-    container_name: shard1
-    command: --shardsvr --replSet shard1ReplSet --port 27018
+    container_name: shard-alpha
+    command: --shardsvr --replSet shardAlphaRepl --port 27018
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
     ports:
       - 27018:27018
     volumes:
-      - shard1:/data/db
+      - shard-alpha-data:/data/db
 
-  shard2:
+  shard_beta:
     image: mongo:7.0
-    container_name: shard2
-    command: --shardsvr --replSet shard2ReplSet --port 27019
+    container_name: shard-beta
+    command: --shardsvr --replSet shardBetaRepl --port 27019
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
     ports:
       - 27019:27019
     volumes:
-      - shard2:/data/db
+      - shard-beta-data:/data/db
 
-  mongos:
+  mongos_router:
     image: mongo:7.0
-    container_name: mongos
+    container_name: mongos-router-1
     depends_on:
-      - configsvr
-      - shard1
-      - shard2
+      - configdb
+      - shard_alpha
+      - shard_beta
     command: >
-      mongos --configdb configReplSet/configsvr:27017 --bind_ip_all --port 27020
+      mongos --configdb cfgReplSet/configdb-server:27017 --bind_ip_all --port 27020
     ports:
       - 27020:27020
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
 
 volumes:
-  configsvr:
-  shard1:
-  shard2:
+  configdb-data:
+  shard-alpha-data:
+  shard-beta-data:
