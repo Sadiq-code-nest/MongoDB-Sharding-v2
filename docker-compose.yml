@@ -1,58 +1,45 @@
 version: "3.8"
 
 services:
-  configdb:
+  configdb-server:
     image: mongo:7.0
     container_name: configdb-server
-    command: --configsvr --replSet cfgReplSet --port 27017
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: admin123
+    command: ["mongod", "--configsvr", "--replSet", "cfgReplSet", "--port", "27017", "--bind_ip_all"]
     ports:
-      - 27017:27017
+      - "27017:27017"
     volumes:
-      - configdb-data:/data/db
+      - configdb:/data/db
 
-  shard_alpha:
+  shard-alpha:
     image: mongo:7.0
     container_name: shard-alpha
-    command: --shardsvr --replSet shardAlphaRepl --port 27018
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: admin123
+    command: ["mongod", "--shardsvr", "--replSet", "shardAlphaRepl", "--port", "27018", "--bind_ip_all"]
     ports:
-      - 27018:27018
+      - "27018:27018"
     volumes:
-      - shard-alpha-data:/data/db
+      - shardalpha:/data/db
 
-  shard_beta:
+  shard-beta:
     image: mongo:7.0
     container_name: shard-beta
-    command: --shardsvr --replSet shardBetaRepl --port 27019
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: admin123
+    command: ["mongod", "--shardsvr", "--replSet", "shardBetaRepl", "--port", "27019", "--bind_ip_all"]
     ports:
-      - 27019:27019
+      - "27019:27019"
     volumes:
-      - shard-beta-data:/data/db
+      - shardbeta:/data/db
 
-  mongos_router:
+  mongos-router-1:
     image: mongo:7.0
     container_name: mongos-router-1
     depends_on:
-      - configdb
-      - shard_alpha
-      - shard_beta
-    command: >
-      mongos --configdb cfgReplSet/configdb-server:27017 --bind_ip_all --port 27020
+      - configdb-server
+      - shard-alpha
+      - shard-beta
+    command: ["mongos", "--configdb", "cfgReplSet/configdb-server:27017", "--bind_ip_all", "--port", "27020"]
     ports:
-      - 27020:27020
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: admin123
+      - "27020:27020"
 
 volumes:
-  configdb-data:
-  shard-alpha-data:
-  shard-beta-data:
+  configdb:
+  shardalpha:
+  shardbeta:
